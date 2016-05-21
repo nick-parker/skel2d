@@ -6,6 +6,9 @@ class Vec(val x: Double, val y: Double) extends TwoD{
   def *(other: Double) : Vec = {
     return new Vec(this.x*other, this.y*other)
   }
+  def /(other: Double) : Vec = {
+    return new Vec(this.x/other, this.y/other)
+  }
   def unary_-() : Vec = {
     return new Vec(-this.x, -this.y)
   }

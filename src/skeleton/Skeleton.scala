@@ -86,7 +86,15 @@ class Skeleton(pnts: List[Corner]) {
     var en = e.b.en
     val new_node = new Node(e.p.x, e.p.y, ep, en, e.d)
     new_node.prev = e.a.prev
+    e.a.prev match {
+      case Some(n: Node) => n.next = Some(new_node)
+      case None =>
+    }
     new_node.next = e.b.next
+    e.b.next match {
+      case Some(n: Node) => n.prev = Some(new_node)
+      case None =>
+    }
     e.a.up = Some(new_node)
     e.b.up = Some(new_node)
     e.a.marked = true
@@ -131,13 +139,13 @@ class Skeleton(pnts: List[Corner]) {
     return output
   }
   
-  def get_bisectors(): List[Line] = {
+  def get_bisectors(mul: Double = 1): List[Line] = {
     var output: List[Line] = List.empty
     for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
       val p = n.asInstanceOf[Node]
       val b = p.bisector
 //      println("p: " + b.p + " v: " + b.v)
-      output = new Line(Vec.toVec(b.p), b.p + b.v*0.5, true)::output 
+      output = new Line(Vec.toVec(b.p), b.p + b.v*0.5*mul, true)::output 
     }
     return output
   }
