@@ -3,7 +3,7 @@ package skeleton
 import scala.collection.mutable.PriorityQueue
 import display.Line
 import util.Vec
-import display.Draw
+import display.{Draw, fmt}
 
 class Skeleton(pnts: List[Corner]) {
   var min: Vec = Vec.zero
@@ -41,7 +41,6 @@ class Skeleton(pnts: List[Corner]) {
     for(p0::p1::_ <- pairs){
       p0.bisector.intersect(p1.bisector) match {
         case Some(e) =>{
-          println("Created an event")
           eve.enqueue(e)
         }
         case None => 
@@ -55,11 +54,7 @@ class Skeleton(pnts: List[Corner]) {
       handle_event(eve.dequeue());
     }
   }
-  def handle_event(e: Event){
-    if(e.a.marked || e.b.marked){
-      return
-    }
-    //Check for triangular peaks
+  private def handle_peak(e: Event) : Boolean = {
     if(e.a.prev == e.b.next && e.a.prev != None){
       val peak = new Peak(e.p.x, e.p.y)
       e.a.up = Some(peak)
@@ -74,6 +69,17 @@ class Skeleton(pnts: List[Corner]) {
         case None =>
       }
       nodes = peak::nodes
+      return true
+    }
+    return false
+  }
+  
+  private def handle_event(e: Event){
+    if(e.a.marked || e.b.marked){
+      return
+    }
+    //Check for triangular peaks
+    if(handle_peak(e)){
       return
     }
     var ep = e.a.ep
@@ -87,14 +93,12 @@ class Skeleton(pnts: List[Corner]) {
     e.b.marked = true
     new_node.hit_prev() match {
       case Some(x) =>{
-//    	  println("Got a hit on the prev edge")
         eve.enqueue(x)
       }
       case None =>
     }
     new_node.hit_next() match {
       case Some(x) =>{
-//        println("Got a hit on the next edge")
         eve.enqueue(x)        
       }
       case None => 
@@ -116,24 +120,24 @@ class Skeleton(pnts: List[Corner]) {
     for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
       val p = n.asInstanceOf[Node]
       output = p.up match {
-        case Some(o) => new Line(Vec.toVec(p), Vec.toVec(o), true, "%1.2f" format p.d)::output;
+        case Some(o) => new Line(Vec.toVec(p), Vec.toVec(o), true, fmt.dbl format p.d)::output;
         case None => output
       }
     }
     for(e <- eve) {
-      output = new Line(e.p, e.p + (e.a - e.p).unit*0.15, false, "%1.2f" format e.d)::output
-      output = new Line(e.p, e.p + (e.b - e.p).unit*0.15, false, "%1.2f" format e.d)::output
+      output = new Line(e.p, e.p + (e.a - e.p).unit*0.15, false, fmt.dbl format e.d)::output
+      output = new Line(e.p, e.p + (e.b - e.p).unit*0.15, false, fmt.dbl format e.d)::output
     }
     return output
   }
   
   def get_bisectors(): List[Line] = {
-    var output = get_poly()
+    var output: List[Line] = List.empty
     for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
       val p = n.asInstanceOf[Node]
       val b = p.bisector
-      output = new Line(Vec.toVec(b.p), b.p + b.v*0.55, true)::output
-      
+//      println("p: " + b.p + " v: " + b.v)
+      output = new Line(Vec.toVec(b.p), b.p + b.v*0.5, true)::output 
     }
     return output
   }

@@ -15,14 +15,13 @@ object Main extends App{
 	  }
 		val filename = "points.txt"
 		val pnts = ReadFile.read(filename)
-		println(pnts)
 		val cnrs = for(p <- pnts(0)) yield new Corner(p._1, p._2)
 		var sk: Skeleton = new Skeleton(cnrs)
 		sk.init()
-		println(sk.nodes)
-		print(sk.nodes.length)
+		println("Number of nodes: " + sk.nodes.length)
 		val output = "skel.png"
 		Draw.draw_lines(sk.get_display(), sk.max.x - sk.min.x, sk.max.y - sk.min.y, 100, output)
+		print(sk.get_bisectors())
 		Draw.draw_lines(sk.get_bisectors(), sk.max.x -  sk.min.x, sk.max.y - sk.min.y, 100, "bisectors.png")
 	}
 	def test_edges() {

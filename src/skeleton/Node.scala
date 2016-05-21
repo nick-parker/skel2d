@@ -1,6 +1,7 @@
 package skeleton
 
 import util.TwoD
+import display.fmt
 
 abstract class SkelNode extends TwoD
 
@@ -29,6 +30,6 @@ class Node(val x: Double, val y: Double, val ep: Edge, val en: Edge, val d: Doub
     }
   }
   override def toString() = {
-    "Node(" + x.toString() + ", " + y.toString() + ")"
+    "Node(" + (fmt.dbl format x)+ ", " + (fmt.dbl format y) + ")"
   }
 }

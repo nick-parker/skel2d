@@ -1,5 +1,7 @@
 package util
 
+import display.fmt
+
 class Vec(val x: Double, val y: Double) extends TwoD{
   def *(other: Double) : Vec = {
     return new Vec(this.x*other, this.y*other)
@@ -18,6 +20,9 @@ class Vec(val x: Double, val y: Double) extends TwoD{
   }
   def dot(other: Vec) : Double = {
     return this.x * other.x + this.y * other.y
+  }
+  override def toString(): String = {
+    return "(" + (fmt.dbl format x) + ", " + (fmt.dbl format y) + ")" 
   }
 }
 
