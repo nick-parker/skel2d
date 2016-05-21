@@ -16,7 +16,7 @@ object Main extends App{
 		val filename = "points.txt"
 		val pnts = ReadFile.read(filename)
 		val cnrs = for(p <- pnts(0)) yield new Corner(p._1, p._2)
-		var sk: Skeleton = new Skeleton(cnrs)
+		var sk: Skeleton = new Skeleton(cnrs, show_steps=true)
 		sk.init()
 		println("Number of nodes: " + sk.nodes.length)
 		val output = "skel.png"

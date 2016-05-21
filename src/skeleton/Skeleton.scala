@@ -5,7 +5,7 @@ import display.Line
 import util.Vec
 import display.{Draw, fmt}
 
-class Skeleton(pnts: List[Corner]) {
+class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
   var min: Vec = Vec.zero
   var max: Vec = Vec.zero 
   var bis: List[Bisector] = List.empty;
@@ -49,7 +49,9 @@ class Skeleton(pnts: List[Corner]) {
     //Sort event list
     var i = 0
     while(eve.nonEmpty){
-      Draw.draw_lines(this.get_display(), max.x - min.x, max.y - min.y, 100, "Step " + i)
+      if(show_steps){
+        Draw.draw_lines(this.get_display(), max.x - min.x, max.y - min.y, 100, "Step_" + i)
+      }
       i += 1
       handle_event(eve.dequeue());
     }
