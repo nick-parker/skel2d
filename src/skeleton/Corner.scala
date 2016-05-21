@@ -10,7 +10,7 @@ class Corner(val x: Double, val y: Double) extends TwoD{
   def init_node(): Boolean = {
     (prev, next) match {
       case (Some(a), Some(b)) => {
-        this.node = Some(new Node(x, y, a, b))
+        this.node = Some(new Node(x, y, new Edge(a, this), new Edge(this, b)))
         return true
       }
       case _ => return false
@@ -19,7 +19,7 @@ class Corner(val x: Double, val y: Double) extends TwoD{
   def connect_node(): Boolean = {
     if(this.node == None) return false
     val n = this.node.get
-    (n.ac.node, n.bc.node) match {
+    (n.ep.a.node, n.en.b.node) match {
       case (Some(a), Some(b)) => {
         n.prev = Some(a)
         n.next = Some(b)

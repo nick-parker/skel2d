@@ -4,7 +4,7 @@ import util.ApproxEq.approx_eq
 import util.TwoD
 import util.Vec
 
-class Bisector(val v: Vec, val p: Node, val i: Corner, val j: Corner) {
+class Bisector(val v: Vec, val p: Node, val i: Edge, val j: Edge) {
   def intersect(other: Bisector) : Option[Event] = {
       val perp = this.v.left_perp
       val a2b = this.p - other.p
@@ -18,8 +18,7 @@ class Bisector(val v: Vec, val p: Node, val i: Corner, val j: Corner) {
         if (t1 >= 0 && t2 >=0) {
           //Calculate distance to edge:
           val p = other.p+other.v*t2
-          val d = Math.abs(i.next_edge.left_perp.unit.dot(p))
-          Some(new Event(p, d, this.p, other.p))
+          Some(new Event(p, this.i.distance(p), this.p, other.p))
         } else {
           None
         }

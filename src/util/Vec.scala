@@ -4,6 +4,9 @@ class Vec(val x: Double, val y: Double) extends TwoD{
   def *(other: Double) : Vec = {
     return new Vec(this.x*other, this.y*other)
   }
+  def unary_-() : Vec = {
+    return new Vec(-this.x, -this.y)
+  }
   def norm: Double = {
     return math.sqrt(math.pow(this.x, 2) + math.pow(this.y, 2))
   }

@@ -57,15 +57,18 @@ object Draw {
 		// write image to a file
 		javax.imageio.ImageIO.write(canvas, "png", new java.io.File("drawing.png"))
 	}
-	private def draw_circle(g: Graphics2D, c: Vec, r: Double){
-	  g.fill(new Ellipse2D.Double(c.x-r, c.y-r, 2*r, 2*r))
+	private def draw_circle(g: Graphics2D, c: Vec, r: Double, t: Int){
+	  g.fill(new Ellipse2D.Double(t + c.x-r, t + c.y-r, 2*r, 2*r))
 	}
-	def draw_lines(lines: List[Line], width: Double, height: Double, res: Double, name: String = "drawing.png"){
-
-		val size = ((width*res).toInt, (height*res).toInt);
+	private def draw_line(g: Graphics2D, a: Vec, b: Vec, t: Int){
+	  g.draw(new Line2D.Double(t+a.x, t+a.y, t+b.x, t+b.y))
+	}
+	def draw_lines(lines: List[Line], width: Double, height: Double, res: Double, name: String = "drawing.png", border: Int = 1){
+	  val trim = (border*res).toInt
+		val size = ((width*res).toInt+2*trim, (height*res).toInt+2*trim);
 		val canvas = new BufferedImage(size._1, size._2, BufferedImage.TYPE_INT_RGB)
 		val g = canvas.createGraphics()
-
+		
 		// clear background
 		g.setColor(Color.WHITE)
 		g.fillRect(0, 0, canvas.getWidth, canvas.getHeight)
@@ -77,12 +80,16 @@ object Draw {
 		for(l <- lines){
 		  val a = l.a * res
 		  val b = l.b * res
-		  g.draw(new Line2D.Double(a.x, a.y, b.x, b.y))
+		  draw_line(g, a, b, trim)
 			if(l.directed){
 			  val a2b = b - a
 			  val r = 0.01 * res * width
-			  draw_circle(g, a+a2b.unit*((a2b.norm - 2*r)), r)			  
+			  draw_circle(g, a+a2b.unit*((a2b.norm - 2*r)), r, trim)			  
 			}
+		  if(l.text != ""){
+		    g.setFont(new Font("Batang", Font.PLAIN, 20))
+		    g.drawString(l.text, a.x.toInt + 25 + trim, a.y.toInt + 25 + trim)
+		  }
 		}
 		g.dispose()
 		javax.imageio.ImageIO.write(canvas, "png", new java.io.File(name))

@@ -16,6 +16,7 @@ object Main extends App{
 		println(sk.nodes)
 		print(sk.nodes.length)
 		val output = "skel.png"
-		Draw.draw_lines(sk.get_display(), sk.max.x - sk.min.x, sk.max.y - sk.min.y, 50, output)
+		Draw.draw_lines(sk.get_display(), sk.max.x - sk.min.x, sk.max.y - sk.min.y, 100, output)
+//		Draw.draw_lines(sk.get_bisectors(), sk.max.x -  sk.min.x, sk.max.y - sk.min.y, 100, "bisectors.png")
 	}
 }
