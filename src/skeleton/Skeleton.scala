@@ -8,35 +8,34 @@ import display.{Draw, fmt}
 class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
   var min: Vec = Vec.zero
   var max: Vec = Vec.zero 
-  var bis: List[Bisector] = List.empty;
   var eve: PriorityQueue[Event] = new PriorityQueue[Event]();
   var nodes: List[SkelNode] = List.empty;
+  /*
+   * Generate initial nodes from the input points and calculate the straight skeleton of the
+   * polygon.
+   */
   def init() {
-    //Initialize bounds
-	  val minX = pnts.foldLeft(Double.MaxValue)(((a:Double, c:Corner) => Math.min(a, c.x)))
-    val maxX = pnts.foldLeft(Double.MinValue)(((a:Double, c:Corner) => Math.max(a, c.x)))
-    val minY = pnts.foldLeft(Double.MaxValue)(((a:Double, c:Corner) => Math.min(a, c.y)))
-    val maxY = pnts.foldLeft(Double.MinValue)(((a:Double, c:Corner) => Math.max(a, c.y)))
-    min = new Vec(minX, minY)
-	  max = new Vec(maxX, maxY)
+    init_bounds()
     
-    //Initialize the doubly linked list.
+    //Convert the explicit list input to an implicit doubly linked list.
     val edges = (pnts.last::pnts) sliding 2
     for(a::b::_ <- edges){
       a.next = Some(b)
       b.prev = Some(a)
     }
-    //Initialize Nodes
+    //Initialize Nodes. This fold is equivalent to "Call init_node() on all points, and return
+    //whether all of them returned true."
     if(!pnts.foldLeft(true)( (b,x) => b && x.init_node())){
       throw new Exception("One or more corners was missing neighbors. Could not initialize nodes.")
     }
-    //Connect nodes
+    //Connect nodes with a similar fold check. This has to be a separate step since it needs all
+    //the neighboring nodes initialized.
     if(!pnts.foldLeft(true)( (b,x) => b && x.connect_node())){
       throw new Exception("Failed to connect corner nodes.")
     }
-    //Add nodes to output
+    //Add the nodes representing each corner of the input polygon to the output.
     nodes = (for(p <- pnts) yield p.node) flatten
-    //Initialize event list
+    //Initialize event queue with the intersections of all the bisectors of the input polygon.
     val pairs = ((pnts.last::pnts).flatMap(x => x.node)) sliding 2
     for(p0::p1::_ <- pairs){
       p0.bisector.intersect(p1.bisector) match {
@@ -46,7 +45,8 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
         case None => 
       }
     }
-    //Sort event list
+    //While there are still events in the queue, dequeue them and either add them to the skeleton
+    //or throw them away if a previously handled event has taken one of their parent nodes.
     var i = 0
     while(eve.nonEmpty){
       if(show_steps){
@@ -55,6 +55,14 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
       i += 1
       handle_event(eve.dequeue());
     }
+  }
+  private def init_bounds() {
+    val minX = pnts.foldLeft(Double.MaxValue)(((a:Double, c:Corner) => Math.min(a, c.x)))
+    val maxX = pnts.foldLeft(Double.MinValue)(((a:Double, c:Corner) => Math.max(a, c.x)))
+    val minY = pnts.foldLeft(Double.MaxValue)(((a:Double, c:Corner) => Math.min(a, c.y)))
+    val maxY = pnts.foldLeft(Double.MinValue)(((a:Double, c:Corner) => Math.max(a, c.y)))
+    min = new Vec(minX, minY)
+	  max = new Vec(maxX, maxY)
   }
   private def handle_peak(e: Event) : Boolean = {
     if(e.a.prev == e.b.next && e.a.prev != None){
@@ -77,30 +85,37 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
   }
   
   private def handle_event(e: Event){
+    //Check that neither parent has been taken by a previously handled event.
     if(e.a.marked || e.b.marked){
       return
     }
-    //Check for triangular peaks
+    //Check for triangular peaks where three edges converge to a point.
     if(handle_peak(e)){
       return
     }
+    //Make the event into a new node
     var ep = e.a.ep
     var en = e.b.en
     val new_node = new Node(e.p.x, e.p.y, ep, en, e.d)
+    //Set the new node's neighbor behind it in the node loop. This neighbor might be None.
     new_node.prev = e.a.prev
+    //If the neighbor actually exists, update its next reference to point at the new node.
     e.a.prev match {
       case Some(n: Node) => n.next = Some(new_node)
       case None =>
     }
+    //Do the same for the neighbor in the other direction.
     new_node.next = e.b.next
     e.b.next match {
       case Some(n: Node) => n.prev = Some(new_node)
       case None =>
     }
+    //Point the parents of the new node at it and mark them as used.
     e.a.up = Some(new_node)
     e.b.up = Some(new_node)
     e.a.marked = true
     e.b.marked = true
+    //See if the new node's bisector makes any new events with its neighbors' bisectors.
     new_node.hit_prev() match {
       case Some(x) =>{
         eve.enqueue(x)
@@ -115,6 +130,9 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
     }
     nodes = new_node::nodes
   }
+  /*
+   * Get the input polygon in a displayable format.
+   */
   def get_poly(): List[Line] = {
     var output: List[Line] = List.empty
     for(c <- pnts){
@@ -125,6 +143,10 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
     }
     return output
   }
+  /*
+   * Get the input polygon and any skeleton lines which have been created so far in a displayable
+   * format.
+   */
   def get_display(): List[Line] = {
     var output = get_poly()
     for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
@@ -140,7 +162,9 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
     }
     return output
   }
-  
+  /*
+   * Get the bisectors of all nodes in a displayable format.
+   */
   def get_bisectors(mul: Double = 1): List[Line] = {
     var output: List[Line] = List.empty
     for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
