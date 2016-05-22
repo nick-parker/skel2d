@@ -26,4 +26,7 @@ class Edge(val a: Corner, val b: Corner) {
 
 object Edge {
   val debug = new Edge(new Corner(0,0), new Corner(1,0))
+  def bisector(ep: Edge, en: Edge): Vec = {
+    (-ep.asVec().unit + en.asVec().unit).unit
+  }
 }

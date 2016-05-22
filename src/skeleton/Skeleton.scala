@@ -2,12 +2,13 @@ package skeleton
 
 import scala.collection.mutable.PriorityQueue
 import display.Line
-import util.Vec
+import util.{Vec, TwoD}
 import display.{Draw, fmt}
 import scala.collection.mutable.HashSet
 
 class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean = false) {
-  var pnts: List[Corner] = for(p <- pnts_in(0)) yield new Corner(p._1, p._2, this)
+  var pnts: List[Corner] = 
+    if(pnts_in.length > 0) for(p <- pnts_in(0)) yield new Corner(p._1, p._2, this) else List.empty
   var min: Vec = Vec.zero
   var max: Vec = Vec.zero 
   var eve: PriorityQueue[Event] = new PriorityQueue[Event]();
@@ -76,7 +77,7 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
     min = new Vec(minX, minY)
 	  max = new Vec(maxX, maxY)
   }
-  private def handle_peak(e: Event) : Boolean = {
+  private def handle_peak(e: EdgeEvent) : Boolean = {
     if(e.a.prev == e.b.next && e.a.prev != None){
       val peak = new Peak(e.p.x, e.p.y)
       e.a.up = Some(peak)
@@ -115,11 +116,26 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
       //If the turn is clockwise it's reflex.
       return
     }
+    val b = n.bisector
     for(e: Edge <- edges){
-      
+      TwoD.intersect(n, n+b.v, e.a, e.b, TwoD.VecLine) match {
+        case Some(pnt) =>{
+          val prev_bound = e.a.node.get.bisector.v.is_cw(pnt-e.a)
+          val next_bound = !e.b.node.get.bisector.v.is_cw(pnt-e.b)
+          if(prev_bound && next_bound){
+            //Compute the actual location by intersecting node bisector with the
+            //bisector of e and one of the node's adjacent edges.
+            val other = Edge.bisector(n.en, e)
+            val other_origin = TwoD.intersect(n.en.a, n.en.b, e.a, e.b, TwoD.LineLine).get
+            val pos = TwoD.intersect(other_origin, other_origin+other, n, n+b.v, TwoD.LineLine).get
+            eve.enqueue(new SplitEvent(pos, e.distance(pnt), n, e))
+          }
+        }
+        case None => 
+      }
     }
   }
-  private def make_node(e: Event): Node = {
+  private def make_node(e: EdgeEvent): Node = {
     //Create the node and set its adjacent edges.
     var ep = e.a.ep
     var en = e.b.en
@@ -144,8 +160,7 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
     e.b.marked = true
     return new_node
   }
-  
-  private def handle_event(e: Event){
+  private def handle_edge_event(e: EdgeEvent) {
     //Check that neither parent has been taken by a previously handled event.
     if(e.a.marked || e.b.marked){
       return
@@ -159,6 +174,19 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
     intersect_node(new_node)
     nodes = new_node::nodes
   }
+  
+  private def handle_split_event(e: SplitEvent) {
+    
+  }
+  
+  private def handle_event(in: Event){
+    in match {
+      case e: EdgeEvent => handle_edge_event(e)
+      case e: SplitEvent => handle_split_event(e)
+        
+      }
+    }
+  
   /*
    * Get the input polygon in a displayable format.
    */
@@ -186,8 +214,15 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
       }
     }
     for(e <- eve) {
-      output = new Line(e.p, e.p + (e.a - e.p).unit*0.15, false, fmt.dbl format e.d)::output
-      output = new Line(e.p, e.p + (e.b - e.p).unit*0.15, false, fmt.dbl format e.d)::output
+      e match {
+        case e: EdgeEvent => {
+          output = new Line(e.p, e.p + (e.a - e.p).unit*0.15, false, fmt.dbl format e.d)::output
+          output = new Line(e.p, e.p + (e.b - e.p).unit*0.15, false, fmt.dbl format e.d)::output
+        }
+        case e: SplitEvent => {
+          
+        }
+      }
     }
     return output
   }

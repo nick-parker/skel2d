@@ -11,7 +11,7 @@ class Node(val x: Double, val y: Double, val ep: Edge, val en: Edge, val d: Doub
   var up : Option[SkelNode] = None
   var marked: Boolean = false
   def bisector : Bisector = {
-    new Bisector((-ep.asVec().unit + en.asVec().unit).unit, this, ep, en)
+    new Bisector(Edge.bisector(ep, en), this, ep, en)
   }
   def hit_prev() = {
     this.prev match {
