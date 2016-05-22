@@ -110,9 +110,14 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
       }
       case None => 
     }
-    //If the node is reflex, intersect it with other edges in the polygon.
-    val check = n.bisector.v.left_perp
-    
+    //If the node isn't reflex, end here.
+    if(!n.ep.asVec().is_cw(n.en.asVec())){
+      //If the turn is clockwise it's reflex.
+      return
+    }
+    for(e: Edge <- edges){
+      
+    }
   }
   private def make_node(e: Event): Node = {
     //Create the node and set its adjacent edges.

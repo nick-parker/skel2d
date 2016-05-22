@@ -1,7 +1,7 @@
 package debug
 
 import java.io.File
-import util.Vec
+import util.{Vec, TwoD}
 import io.ReadFile
 import display.{Draw, Line}
 import skeleton.{Skeleton, Corner, Edge, Node, Bisector}
@@ -53,5 +53,17 @@ object Main extends App{
 	  println("Contains e2: " + hs.contains(e2))
 	  hs += e2
 	  println(hs.size)
+	}
+	def test_intersect() {
+	  val a = new Vec(3, 0)
+	  val b = new Vec(0, 3)
+	  val v1 = new Vec(0, 1)
+	  val v2 = new Vec(1, 0)
+	  val p = TwoD.intersect(a, a+v1, b, b+v2, TwoD.VecVec)
+	  if(p.isDefined){
+	    println(p.get)
+	  } else {
+	    println("None")
+	  }
 	}
 }
