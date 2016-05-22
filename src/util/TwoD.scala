@@ -12,4 +12,8 @@ trait TwoD {
   def cross(o: TwoD) : Double = {
     return (this.x*o.y) - (this.y*o.x);
   }
+  override def equals(o: Any): Boolean = o match {
+    case c: TwoD => c.x == x && c.y == y
+    case _ => false
+  }
 }

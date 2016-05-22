@@ -32,4 +32,8 @@ class Node(val x: Double, val y: Double, val ep: Edge, val en: Edge, val d: Doub
   override def toString() = {
     "Node(" + (fmt.dbl format x)+ ", " + (fmt.dbl format y) + ")"
   }
+  override def equals(o: Any): Boolean = o match {
+    case c: Node => c.x == x && c.y == y
+    case _ => false
+  }
 }

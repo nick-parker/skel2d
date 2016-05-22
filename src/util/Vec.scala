@@ -27,6 +27,10 @@ class Vec(val x: Double, val y: Double) extends TwoD{
   override def toString(): String = {
     return "(" + (fmt.dbl format x) + ", " + (fmt.dbl format y) + ")" 
   }
+  override def equals(o: Any): Boolean = o match {
+    case c: Vec => c.x == x && c.y == y
+    case _ => false
+  }
 }
 
 object Vec {

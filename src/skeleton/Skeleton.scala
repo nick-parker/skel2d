@@ -4,12 +4,24 @@ import scala.collection.mutable.PriorityQueue
 import display.Line
 import util.Vec
 import display.{Draw, fmt}
+import scala.collection.mutable.HashSet
 
-class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
+class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean = false) {
+  var pnts: List[Corner] = for(p <- pnts_in(0)) yield new Corner(p._1, p._2, this)
   var min: Vec = Vec.zero
   var max: Vec = Vec.zero 
   var eve: PriorityQueue[Event] = new PriorityQueue[Event]();
   var nodes: List[SkelNode] = List.empty;
+  var edges = new HashSet[Edge]
+  def get_edge(a: Corner, b: Corner): Edge = {
+    val e = new Edge(a, b)
+    if(edges.contains(e)){
+      return edges.find(e2 => e2 == e).get
+    } else {
+      edges.add(e)
+      return e
+    }
+  }
   /*
    * Generate initial nodes from the input points and calculate the straight skeleton of the
    * polygon.
@@ -84,16 +96,26 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
     return false
   }
   
-  private def handle_event(e: Event){
-    //Check that neither parent has been taken by a previously handled event.
-    if(e.a.marked || e.b.marked){
-      return
+  private def intersect_node(n: Node){
+    //Intersect node's bisector with adjacent bisectors.
+    n.hit_prev() match {
+      case Some(x) =>{
+        eve.enqueue(x)
+      }
+      case None =>
     }
-    //Check for triangular peaks where three edges converge to a point.
-    if(handle_peak(e)){
-      return
+    n.hit_next() match {
+      case Some(x) =>{
+        eve.enqueue(x)        
+      }
+      case None => 
     }
-    //Make the event into a new node
+    //If the node is reflex, intersect it with other edges in the polygon.
+    val check = n.bisector.v.left_perp
+    
+  }
+  private def make_node(e: Event): Node = {
+    //Create the node and set its adjacent edges.
     var ep = e.a.ep
     var en = e.b.en
     val new_node = new Node(e.p.x, e.p.y, ep, en, e.d)
@@ -115,19 +137,21 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
     e.b.up = Some(new_node)
     e.a.marked = true
     e.b.marked = true
+    return new_node
+  }
+  
+  private def handle_event(e: Event){
+    //Check that neither parent has been taken by a previously handled event.
+    if(e.a.marked || e.b.marked){
+      return
+    }
+    //Check for triangular peaks where three edges converge to a point.
+    if(handle_peak(e)){
+      return
+    }
+    val new_node = make_node(e)
     //See if the new node's bisector makes any new events with its neighbors' bisectors.
-    new_node.hit_prev() match {
-      case Some(x) =>{
-        eve.enqueue(x)
-      }
-      case None =>
-    }
-    new_node.hit_next() match {
-      case Some(x) =>{
-        eve.enqueue(x)        
-      }
-      case None => 
-    }
+    intersect_node(new_node)
     nodes = new_node::nodes
   }
   /*
@@ -175,4 +199,8 @@ class Skeleton(var pnts: List[Corner], val show_steps : Boolean = false) {
     }
     return output
   }
+}
+
+object Skeleton {
+  val debug = new Skeleton(List.empty)
 }
