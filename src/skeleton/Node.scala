@@ -37,3 +37,7 @@ class Node(val x: Double, val y: Double, val ep: Edge, val en: Edge, val d: Doub
     case _ => false
   }
 }
+
+object Node{
+  val debug: Node = new Node(Double.NaN, Double.NaN, Edge.debug, Edge.debug, Double.NaN) 
+}

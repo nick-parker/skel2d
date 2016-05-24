@@ -23,6 +23,9 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
       return e
     }
   }
+  private def active_nodes() = {
+    nodes.filter(x => x.isInstanceOf[Node]).map{x => x.asInstanceOf[Node]}
+  }
   /*
    * Generate initial nodes from the input points and calculate the straight skeleton of the
    * polygon.
@@ -47,16 +50,17 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
       throw new Exception("Failed to connect corner nodes.")
     }
     //Add the nodes representing each corner of the input polygon to the output.
-    nodes = (for(p <- pnts) yield p.node) flatten
-    //Initialize event queue with the intersections of all the bisectors of the input polygon.
-    val pairs = ((pnts.last::pnts).flatMap(x => x.node)) sliding 2
-    for(p0::p1::_ <- pairs){
-      p0.bisector.intersect(p1.bisector) match {
-        case Some(e) =>{
-          eve.enqueue(e)
-        }
-        case None => 
-      }
+    nodes = (for(p <- pnts) yield p.node) flatten;
+    //Initialize the event queue with all potential edge events.
+    for(n <- active_nodes()){
+    	n.hit_next() match {
+    	  case Some(x) => eve.enqueue(x)
+    	  case None =>
+    	}
+    }
+    //Add all potential split events to the event queue.
+    for(n <- active_nodes()){
+      
     }
     //While there are still events in the queue, dequeue them and either add them to the skeleton
     //or throw them away if a previously handled event has taken one of their parent nodes.
@@ -95,6 +99,11 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
       return true
     }
     return false
+  }
+  private def intersect_reflex(n: Node){
+    for(start <- active_nodes()){
+      
+    }
   }
   
   private def intersect_node(n: Node){
@@ -176,7 +185,6 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
   }
   
   private def handle_split_event(e: SplitEvent) {
-    
   }
   
   private def handle_event(in: Event){
@@ -206,10 +214,9 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
    */
   def get_display(): List[Line] = {
     var output = get_poly()
-    for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
-      val p = n.asInstanceOf[Node]
-      output = p.up match {
-        case Some(o) => new Line(Vec.toVec(p), Vec.toVec(o), true, fmt.dbl format p.d)::output;
+    for(n <- active_nodes()){
+      output = n.up match {
+        case Some(o) => new Line(Vec.toVec(n), Vec.toVec(o), true, fmt.dbl format n.d)::output;
         case None => output
       }
     }
@@ -231,9 +238,8 @@ class Skeleton(pnts_in: List[List[(Double, Double)]], val show_steps : Boolean =
    */
   def get_bisectors(mul: Double = 1): List[Line] = {
     var output: List[Line] = List.empty
-    for(n <- nodes.filter { x => x.isInstanceOf[Node] }){
-      val p = n.asInstanceOf[Node]
-      val b = p.bisector
+    for(n <- active_nodes()){
+      val b = n.bisector
 //      println("p: " + b.p + " v: " + b.v)
       output = new Line(Vec.toVec(b.p), b.p + b.v*0.5*mul, true)::output 
     }
